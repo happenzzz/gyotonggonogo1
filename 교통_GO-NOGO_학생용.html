@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>교통일까, 아닐까? GO/NO-GO 토의판 (학생용)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fff8ef; --ink:#33302e; --muted:#7a716a;
+    --go:#2fb37a; --go-soft:#e3f7ec; --go-line:#9fe0bd;
+    --no:#ef5a6f; --no-soft:#ffe8ec; --no-line:#ffb3bf;
+    --hold:#f3b31b; --hold-soft:#fff4d6; --hold-line:#ffd978;
+    --sky:#5b8def; --sky-soft:#e8f0ff;
+    --card:#ffffff; --shadow:0 6px 18px rgba(80,60,40,.12);
+    --r:22px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font-family:'Noto Sans KR','Pretendard',system-ui,sans-serif;overscroll-behavior:none}
+  body{display:flex;flex-direction:column;min-height:100%;user-select:none;-webkit-user-select:none}
+  .jua{font-family:'Jua','Noto Sans KR',sans-serif;font-weight:400}
+
+  /* ---------- top ---------- */
+  header{display:flex;align-items:center;gap:12px;padding:12px 18px 6px;flex-wrap:wrap}
+  header h1{margin:0;font-size:clamp(22px,2.6vw,34px);letter-spacing:-.5px;flex:1;min-width:240px}
+  header h1 small{font-size:.6em;color:var(--muted);margin-left:6px}
+  .group{display:flex;align-items:center;gap:6px;font-size:20px}
+  .group input{width:64px;font:inherit;font-family:'Jua';font-size:22px;text-align:center;border:3px solid #eadfd3;border-radius:14px;padding:4px 6px;background:#fff;color:var(--ink)}
+  .tools{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{border:none;border-radius:16px;padding:10px 14px;font:inherit;font-weight:700;font-size:16px;cursor:pointer;background:#fff;color:var(--ink);box-shadow:0 3px 0 #e6d9cc;transition:transform .08s}
+  .btn:active{transform:translateY(2px);box-shadow:0 1px 0 #e6d9cc}
+
+  .props{margin:4px 18px 10px;background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:12px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .props .label{font-family:'Jua';font-size:22px;color:var(--sky);white-space:nowrap}
+  .prop{display:flex;align-items:center;gap:8px;background:var(--sky-soft);border-radius:16px;padding:8px 14px;font-size:clamp(17px,1.7vw,22px);font-weight:700;flex:1;min-width:260px}
+  .prop b{font-family:'Jua';font-weight:400;background:var(--sky);color:#fff;border-radius:10px;padding:2px 10px;font-size:.9em;white-space:nowrap}
+  .rule{font-size:15px;color:var(--muted);width:100%;margin-top:-2px}
+
+  /* ---------- board ---------- */
+  main{flex:1;display:grid;grid-template-columns:1fr minmax(300px,1.05fr) 1fr;gap:14px;padding:0 18px 12px;min-height:0}
+  .zone{border-radius:var(--r);padding:12px;display:flex;flex-direction:column;min-height:300px;border:4px dashed transparent;transition:background .15s,border-color .15s,transform .15s}
+  .zone.go{background:var(--go-soft);border-color:var(--go-line)}
+  .zone.no{background:var(--no-soft);border-color:var(--no-line)}
+  .zone.over{transform:scale(1.015);border-style:solid}
+  .zone.go.over{background:#cdf0dc;border-color:var(--go)}
+  .zone.no.over{background:#ffd6dd;border-color:var(--no)}
+  .zone-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .zone-head .t{font-family:'Jua';font-size:clamp(26px,3vw,40px);line-height:1}
+  .zone.go .t{color:var(--go)} .zone.no .t{color:var(--no)}
+  .zone-head .sub{font-size:clamp(14px,1.3vw,17px);font-weight:700;color:var(--muted)}
+  .zone-head .count{font-family:'Jua';font-size:22px;background:#fff;border-radius:14px;padding:2px 12px}
+  .chips{flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;align-content:start;overflow:auto;padding:2px}
+  .empty-hint{grid-column:1/-1;text-align:center;color:var(--muted);font-size:17px;padding:30px 8px;opacity:.8}
+
+  .chip{position:relative;background:#fff;border-radius:16px;padding:8px 10px;display:flex;align-items:center;gap:8px;box-shadow:0 3px 8px rgba(0,0,0,.08);font-weight:700;font-size:clamp(15px,1.25vw,17px);line-height:1.3;cursor:grab;touch-action:none;min-height:58px;word-break:keep-all}
+  .chip .e{font-size:30px;line-height:1;flex:none}
+
+  /* ---------- center ---------- */
+  .center{display:flex;flex-direction:column;gap:12px;min-height:0}
+  .deck{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:14px;display:flex;flex-direction:column;align-items:center;gap:10px;flex:none}
+  .deck-top{width:100%;display:flex;justify-content:space-between;align-items:center;font-weight:700;color:var(--muted)}
+  .deck-top .left{font-family:'Jua';font-size:20px;color:var(--ink)}
+  .bar{width:100%;height:12px;background:#f1e8de;border-radius:8px;overflow:hidden}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,#ffb86b,#ff8fa3,#8fb8ff);border-radius:8px;transition:width .3s}
+  .big{width:min(100%,340px);min-height:clamp(190px,30vh,290px);border-radius:26px;background:linear-gradient(160deg,#fffdf7,#fff1e0);border:4px solid #f2e2cf;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;text-align:center;cursor:grab;touch-action:none;box-shadow:0 10px 22px rgba(120,80,40,.15);animation:pop .35s ease}
+  .big .e{font-size:clamp(70px,9vw,120px);line-height:1}
+  .big .txt{font-family:'Jua';font-size:clamp(24px,2.4vw,34px);line-height:1.3;word-break:keep-all}
+  .big .drag-hint{font-size:14px;color:var(--muted)}
+  @keyframes pop{from{transform:scale(.85) rotate(-3deg);opacity:0}to{transform:none;opacity:1}}
+  .choose{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;width:100%}
+  .choose button{border:none;border-radius:18px;padding:12px 6px;font-family:'Jua';font-size:clamp(18px,1.9vw,24px);color:#fff;cursor:pointer;line-height:1.15}
+  .choose button small{display:block;font-family:'Noto Sans KR';font-size:13px;font-weight:700;opacity:.9}
+  .choose .g{background:var(--go);box-shadow:0 4px 0 #1f8a5c}
+  .choose .h{background:var(--hold);box-shadow:0 4px 0 #c68c05}
+  .choose .n{background:var(--no);box-shadow:0 4px 0 #c63a4e}
+  .choose button:active{transform:translateY(3px);box-shadow:none}
+  .done{display:none;flex-direction:column;align-items:center;gap:10px;text-align:center}
+  .done .e{font-size:80px}
+  .done .t{font-family:'Jua';font-size:30px}
+  .done p{margin:0;color:var(--muted);font-weight:700}
+  .deck.finished .done{display:flex}
+  .deck.finished .play{display:none}
+  .play{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
+
+  .hold{background:var(--hold-soft);border:4px dashed var(--hold-line);border-radius:var(--r);padding:10px 12px;min-height:120px;flex:1;display:flex;flex-direction:column;transition:all .15s}
+  .hold.over{background:#ffeab0;border-style:solid;border-color:var(--hold)}
+  .hold .zone-head .t{font-size:22px;color:#c68c05}
+  .hold .chips{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+
+  footer{display:flex;justify-content:center;gap:10px;padding:0 18px 14px;flex-wrap:wrap}
+
+  /* ---------- drag ghost ---------- */
+  .ghost{position:fixed;z-index:999;pointer-events:none;opacity:.92;transform:rotate(-3deg) scale(1.03);box-shadow:0 14px 30px rgba(0,0,0,.25)!important}
+
+  /* ---------- modal ---------- */
+  .modal{position:fixed;inset:0;background:rgba(50,40,30,.45);display:none;align-items:center;justify-content:center;z-index:500;padding:16px}
+  .modal.show{display:flex}
+  .sheet{background:#fff;border-radius:26px;padding:22px;max-width:min(860px,96vw);width:100%;max-height:92vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.3);animation:pop .25s ease}
+  .sheet h2{margin:0 0 12px;font-family:'Jua';font-weight:400;font-size:30px}
+  .sheet .row{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}
+  .sheet .big-btn{border:none;border-radius:16px;padding:12px 18px;font:inherit;font-weight:900;font-size:18px;cursor:pointer}
+  .primary{background:var(--sky);color:#fff} .ghostbtn{background:#f3ece4;color:var(--ink)} .danger{background:var(--no);color:#fff}
+  .move-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .move-grid button{border:none;border-radius:18px;padding:16px;font-family:'Jua';font-size:22px;cursor:pointer;color:#fff}
+  .result{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .result .col{border-radius:20px;padding:12px}
+  .result .col h3{margin:0 0 8px;font-family:'Jua';font-weight:400;font-size:26px}
+  .result ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+  .result li{background:#fff;border-radius:14px;padding:8px 10px;font-weight:700;font-size:18px;display:flex;gap:8px;align-items:center}
+  .result li .e{font-size:26px}
+  .result li .m{margin-left:auto;font-weight:900}
+  label.f{display:block;font-weight:900;margin:12px 0 4px}
+  .sheet input[type=text],.sheet textarea{width:100%;font:inherit;font-size:17px;border:3px solid #eadfd3;border-radius:14px;padding:10px 12px;color:var(--ink);background:#fffdf9}
+  .sheet textarea{min-height:260px;font-family:ui-monospace,Menlo,Consolas,'Noto Sans KR',monospace;font-size:15px;line-height:1.5;user-select:text;-webkit-user-select:text}
+  .sheet input[type=text]{user-select:text;-webkit-user-select:text}
+  .help{font-size:14px;color:var(--muted);line-height:1.5}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:14px;font-weight:700;z-index:900;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.show{opacity:1}
+
+  @media (max-width:900px){
+    main{grid-template-columns:1fr 1fr;flex:none}
+    .zone{min-height:220px}
+    .center{grid-column:1/-1;order:-1}
+    .deck{min-height:auto}
+    .big{width:min(100%,320px)}
+  }
+  @media (max-width:560px){
+    main{grid-template-columns:1fr}
+    .result,.two{grid-template-columns:1fr}
+    .props .prop{min-width:100%}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1 class="jua" id="title">교통일까, 아닐까? <small>GO/NO-GO 토의판</small></h1>
+  <div class="group jua"><input id="groupNo" type="text" inputmode="numeric" maxlength="3" value="1" aria-label="모둠 번호">모둠</div>
+  <div class="tools">
+    <button class="btn" id="btnShuffle" title="카드 섞어서 처음부터">🔀 처음부터</button>
+    <button class="btn" id="btnResult">📋 결과 보기</button>
+    <button class="btn" id="btnFull">⛶ 전체 화면</button>
+  </div>
+</header>
+
+<section class="props">
+  <span class="label">교통의 속성</span>
+  <div class="prop"><b>속성 1</b><span id="prop1">어떤 장소에서 다른 장소로</span></div>
+  <div class="prop"><b>속성 2</b><span id="prop2">사람이 이동하거나 물건을 옮기는 것</span></div>
+  <div class="rule" id="rule">두 속성에 모두 해당하면 <b style="color:var(--go)">GO!(계속)</b>, 하나라도 해당하지 않으면 <b style="color:var(--no)">NO-GO!(멈춰)</b>를 외쳐요. 의견이 나뉘면 <b style="color:#c68c05">토의 필요</b>에 놓고 이야기해요.</div>
+</section>
+
+<main>
+  <section class="zone go" data-zone="go">
+    <div class="zone-head"><div><div class="t">GO! 계속</div><div class="sub" id="goSub">교통이라고 생각해요</div></div><span class="count" id="goCount">0</span></div>
+    <div class="chips" id="goList"></div>
+  </section>
+
+  <section class="center">
+    <div class="deck" id="deck">
+      <div class="deck-top"><span class="left" id="leftText">남은 카드 16장</span><span id="doneText">0 / 16</span></div>
+      <div class="bar"><i id="bar" style="width:0%"></i></div>
+      <div class="play">
+        <div class="big" id="bigCard"></div>
+        <div class="choose">
+          <button class="g" data-to="go">GO!<small>계속</small></button>
+          <button class="h" data-to="hold">잠깐!<small>토의 필요</small></button>
+          <button class="n" data-to="no">NO-GO!<small>멈춰</small></button>
+        </div>
+      </div>
+      <div class="done">
+        <div class="e">🎉</div>
+        <div class="t">분류를 모두 마쳤어요!</div>
+        <p>어떤 속성 때문에 그렇게 판단했는지<br>발표를 준비해 볼까요?</p>
+        <button class="btn" id="btnResult2" style="font-size:18px;padding:12px 20px">📋 결과 보기</button>
+      </div>
+    </div>
+    <section class="hold" data-zone="hold">
+      <div class="zone-head"><div class="t jua">🗣️ 토의 필요</div><span class="count" id="holdCount">0</span></div>
+      <div class="chips" id="holdList"></div>
+    </section>
+  </section>
+
+  <section class="zone no" data-zone="no">
+    <div class="zone-head"><div><div class="t">NO-GO! 멈춰</div><div class="sub" id="noSub">교통이 아니라고 생각해요</div></div><span class="count" id="noCount">0</span></div>
+    <div class="chips" id="noList"></div>
+  </section>
+</main>
+
+
+<!-- generic modal -->
+<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  /* ===================== 기본 카드 (교통) ===================== */
+  const DEFAULT = {
+    title: '교통일까, 아닐까?',
+    prop1: '어떤 장소에서 다른 장소로',
+    prop2: '사람이 이동하거나 물건을 옮기는 것',
+    goSub: '교통이라고 생각해요',
+    noSub: '교통이 아니라고 생각해요',
+    cards: [
+      ['🚇','지하철을 타고 학교에 가기'],
+      ['🚚','택배 트럭으로 물건 나르기'],
+      ['⛴️','여객선을 타고 제주도에 가기'],
+      ['✈️','비행기를 타고 여행 가기'],
+      ['🚲','자전거를 타고 도서관에 가기'],
+      ['🚡','케이블카를 타고 바다 건너기'],
+      ['🚁','구조 헬기로 환자를 병원에 옮기기'],
+      ['📦','드론으로 물건 배달하기'],
+      ['📱','영상 통화로 할머니와 이야기하기'],
+      ['💬','친구에게 문자 메시지 보내기'],
+      ['📺','집에서 텔레비전 보기'],
+      ['🎠','놀이공원에서 회전목마 타기'],
+      ['🎡','놀이공원에서 관람차 타기'],
+      ['🧸','장난감 자동차로 놀기'],
+      ['🅿️','주차장에 세워 둔 자동차'],
+      ['🏃','러닝머신에서 달리기']
+    ]
+  };
+  const KEY_STATE = 'gonogo-traffic-student-v1';
+
+  const store = {
+    get(k){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; }catch(e){ return null; } },
+    set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+    del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+  };
+
+  const cfg = DEFAULT;
+  let cards = [];      // {id,e,text,ans,miss:[1,2],why}
+  let st = null;       // {deck:[], current:null, go:[], no:[], hold:[], group:'1'}
+
+  const $ = s => document.querySelector(s);
+  const byId = id => cards.find(c => c.id === id);
+
+  function buildCards(){
+    cards = cfg.cards.map((c, i) => ({ id: 'c' + i, e: c[0] || '🃏', text: c[1] || '' }));
+  }
+  function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+  function fresh(){
+    const ids = shuffle(cards.map(c => c.id));
+    return { deck: ids.slice(1), current: ids[0] || null, go: [], no: [], hold: [], group: (st && st.group) || '1' };
+  }
+  function validState(s){
+    if(!s || !Array.isArray(s.deck)) return false;
+    const all = [...s.deck, ...s.go, ...s.no, ...s.hold, ...(s.current ? [s.current] : [])];
+    return all.length === cards.length && all.every(id => byId(id));
+  }
+  function save(){ store.set(KEY_STATE, st); }
+
+  /* ===================== render ===================== */
+  function chipHTML(c){
+    return `<div class="chip" data-id="${c.id}"><span class="e">${c.e}</span><span>${esc(c.text)}</span></div>`;
+  }
+  function esc(s){ return String(s).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])); }
+
+  function render(){
+    $('#title').innerHTML = `${esc(cfg.title)} <small>GO/NO-GO 토의판</small>`;
+    document.title = `${cfg.title} GO/NO-GO 토의판`;
+    $('#prop1').textContent = cfg.prop1; $('#prop2').textContent = cfg.prop2;
+    $('#goSub').textContent = cfg.goSub; $('#noSub').textContent = cfg.noSub;
+    $('#groupNo').value = st.group || '1';
+
+    for (const z of ['go','no','hold']){
+      const list = st[z].map(id => chipHTML(byId(id))).join('');
+      const hint = z === 'hold' ? '의견이 나뉜 카드를 여기에 두고 토의해요' :
+                   z === 'go' ? '카드를 이곳으로 끌어 오거나<br>GO! 버튼을 눌러요' : '카드를 이곳으로 끌어 오거나<br>NO-GO! 버튼을 눌러요';
+      $('#' + z + 'List').innerHTML = list || `<div class="empty-hint">${hint}</div>`;
+      $('#' + z + 'Count').textContent = st[z].length;
+    }
+    const total = cards.length;
+    const placed = st.go.length + st.no.length;
+    const left = st.deck.length + (st.current ? 1 : 0);
+    $('#leftText').textContent = `남은 카드 ${left}장`;
+    $('#doneText').textContent = `${placed} / ${total}`;
+    $('#bar').style.width = total ? (placed / total * 100) + '%' : '0%';
+
+    const big = $('#bigCard');
+    const deck = $('#deck');
+    if (st.current){
+      const c = byId(st.current);
+      if (big.dataset.id !== c.id){
+        big.dataset.id = c.id;
+        big.innerHTML = `<div class="e">${c.e}</div><div class="txt">${esc(c.text)}</div><div class="drag-hint">끌어서 놓거나 아래 버튼을 눌러요</div>`;
+        big.style.animation = 'none'; void big.offsetWidth; big.style.animation = '';
+      }
+      big.style.visibility = 'visible';
+      deck.classList.remove('finished');
+    } else {
+      big.dataset.id = '';
+      big.innerHTML = left || st.hold.length ? `<div class="e">🗣️</div><div class="txt">토의 필요 카드를<br>정리해 주세요</div>` : '';
+      deck.classList.toggle('finished', !left && !st.hold.length && total > 0);
+    }
+    document.querySelectorAll('.choose button').forEach(b => b.disabled = !st.current);
+  }
+
+  /* ===================== move ===================== */
+  function moveCard(id, zone){
+    if (!byId(id)) return;
+    const wasCurrent = st.current === id;
+    for (const z of ['go','no','hold']) st[z] = st[z].filter(x => x !== id);
+    st.deck = st.deck.filter(x => x !== id);
+    if (wasCurrent) st.current = null;
+    if (zone === 'deck'){
+      if (st.current) st.deck.unshift(st.current);
+      st.current = id;
+    } else {
+      st[zone].push(id);
+    }
+    if (!st.current && st.deck.length) st.current = st.deck.shift();
+    save(); render();
+    if (!st.current && !st.deck.length && !st.hold.length) toast('모든 카드를 분류했어요! 🎉');
+  }
+
+  document.querySelectorAll('.choose button').forEach(b => b.addEventListener('click', () => {
+    if (st.current) moveCard(st.current, b.dataset.to);
+  }));
+
+  /* ===================== pointer drag (터치·마우스 공통) ===================== */
+  let drag = null;
+  function zoneAt(x, y){
+    const el = document.elementFromPoint(x, y);
+    const z = el && el.closest('[data-zone]');
+    return z ? z.dataset.zone : (el && el.closest('#deck') ? 'deck' : null);
+  }
+  function clearOver(){ document.querySelectorAll('.over').forEach(e => e.classList.remove('over')); }
+
+  document.addEventListener('pointerdown', e => {
+    const src = e.target.closest('.chip, .big');
+    if (!src || e.button > 0) return;
+    const id = src.classList.contains('big') ? st.current : src.dataset.id;
+    if (!id) return;
+    const r = src.getBoundingClientRect();
+    drag = { id, src, sx: e.clientX, sy: e.clientY, dx: e.clientX - r.left, dy: e.clientY - r.top, w: r.width, moved: false, ghost: null, pid: e.pointerId };
+  });
+  document.addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== drag.pid) return;
+    if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 8) return;
+    e.preventDefault();
+    if (!drag.moved){
+      drag.moved = true;
+      const g = drag.src.cloneNode(true);
+      g.classList.add('ghost');
+      g.style.width = Math.min(drag.w, 320) + 'px';
+      if (drag.src.classList.contains('big')){ g.style.aspectRatio = 'auto'; g.style.height = 'auto'; g.style.padding = '14px'; g.querySelector('.drag-hint')?.remove(); g.style.animation='none'; }
+      document.body.appendChild(g);
+      drag.ghost = g;
+      drag.src.style.opacity = '.35';
+      if (drag.w > 320) drag.dx = drag.dx * 320 / drag.w;
+    }
+    drag.ghost.style.left = (e.clientX - drag.dx) + 'px';
+    drag.ghost.style.top = (e.clientY - Math.min(drag.dy, 60)) + 'px';
+    clearOver();
+    const z = zoneAt(e.clientX, e.clientY);
+    if (z && z !== 'deck') document.querySelector(`[data-zone="${z}"]`).classList.add('over');
+  }, { passive: false });
+  function endDrag(e){
+    if (!drag || (e && e.pointerId !== drag.pid)) return;
+    const d = drag; drag = null;
+    clearOver();
+    if (d.ghost) d.ghost.remove();
+    d.src.style.opacity = '';
+    if (d.moved){
+      const z = e ? zoneAt(e.clientX, e.clientY) : null;
+      if (z && !(z === 'deck' && d.id === st.current)) moveCard(d.id, z);
+    } else if (d.src.classList.contains('chip')) {
+      openChip(d.id);
+    }
+  }
+  document.addEventListener('pointerup', endDrag);
+  document.addEventListener('pointercancel', () => endDrag(null));
+
+  /* ===================== modal helpers ===================== */
+  const modal = $('#modal'), sheet = $('#sheet');
+  function openModal(html){ sheet.innerHTML = html; modal.classList.add('show'); }
+  function closeModal(){ modal.classList.remove('show'); }
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  function ask(title, msg, okText, cls, onOk){
+    openModal(`<h2>${title}</h2><p style="font-size:18px;line-height:1.6;margin:0">${msg}</p>
+      <div class="row"><button class="big-btn ghostbtn" data-x>취소</button><button class="big-btn ${cls||'primary'}" data-ok>${okText}</button></div>`);
+    sheet.querySelector('[data-x]').onclick = closeModal;
+    sheet.querySelector('[data-ok]').onclick = () => { closeModal(); onOk(); };
+  }
+  function toast(t){ const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('show'), 1800); }
+
+  function openChip(id){
+    const c = byId(id);
+    const zoneOf = ['go','no','hold'].find(z => st[z].includes(id));
+    openModal(`<h2>${c.e} ${esc(c.text)}</h2>
+      <p class="help" style="font-size:17px;margin-top:0">어떤 속성 때문에 이곳에 두었는지 모둠 친구들과 이야기해 보세요. 다른 곳으로 옮길 수도 있어요.</p>
+      <div class="move-grid">
+        ${[['go','GO! 계속으로','var(--go)','#bfe8d3'],['no','NO-GO! 멈춰로','var(--no)','#ffc2cc'],['hold','토의 필요로','var(--hold)','#ffe3a3']]
+          .map(([z,t,c,d]) => `<button data-to="${z}" style="background:${zoneOf===z?d:c}" ${zoneOf===z?'disabled':''}>${t}</button>`).join('')}
+        <button data-to="deck" style="background:#9b8f84">다시 검토하기</button>
+      </div>
+      <div class="row"><button class="big-btn ghostbtn" data-x>닫기</button></div>`);
+    sheet.querySelectorAll('[data-to]').forEach(b => b.onclick = () => { closeModal(); moveCard(id, b.dataset.to); });
+    sheet.querySelector('[data-x]').onclick = closeModal;
+  }
+
+  /* ===================== result ===================== */
+  function openResult(){
+    const li = id => { const c = byId(id); return `<li><span class="e">${c.e}</span>${esc(c.text)}</li>`; };
+    openModal(`<h2>${esc(st.group||'')}모둠 토의 결과 <span style="font-size:18px;color:var(--muted)">${esc(cfg.title)}</span></h2>
+      <div class="result">
+        <div class="col" style="background:var(--go-soft)"><h3 style="color:var(--go)">GO! 계속 (${st.go.length})</h3><ul>${st.go.map(li).join('') || '<li style="color:var(--muted)">아직 없어요</li>'}</ul></div>
+        <div class="col" style="background:var(--no-soft)"><h3 style="color:var(--no)">NO-GO! 멈춰 (${st.no.length})</h3><ul>${st.no.map(li).join('') || '<li style="color:var(--muted)">아직 없어요</li>'}</ul></div>
+      </div>
+      ${st.hold.length ? `<div class="col" style="background:var(--hold-soft);border-radius:20px;padding:12px;margin-top:12px"><h3 style="margin:0 0 8px;font-family:Jua;font-weight:400;font-size:24px;color:#c68c05">토의 필요 (${st.hold.length})</h3><ul style="list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px">${st.hold.map(id => `<li style="background:#fff;border-radius:14px;padding:8px 10px;font-weight:700">${byId(id).e} ${esc(byId(id).text)}</li>`).join('')}</ul></div>` : ''}
+      <div class="row"><button class="big-btn primary" data-x>닫기</button></div>`);
+    sheet.querySelector('[data-x]').onclick = closeModal;
+  }
+
+  /* ===================== buttons ===================== */
+  $('#btnShuffle').onclick = () => ask('처음부터 할까요?', '분류한 카드를 모두 거두고, 카드를 섞어서 처음부터 시작해요.', '처음부터', 'danger', () => { st = fresh(); save(); render(); });
+  $('#btnResult').onclick = openResult;
+  $('#btnResult2').onclick = openResult;
+  $('#btnFull').onclick = () => {
+    try{
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => toast('전체 화면을 쓸 수 없는 환경이에요'));
+      else document.exitFullscreen();
+    }catch(e){ toast('전체 화면을 쓸 수 없는 환경이에요'); }
+  };
+  $('#groupNo').addEventListener('input', e => { st.group = e.target.value.trim(); save(); });
+
+  /* ===================== start ===================== */
+  buildCards();
+  const saved = store.get(KEY_STATE);
+  st = validState(saved) ? saved : fresh();
+  save(); render();
+})();
+</script>
+</body>
+</html>
